@@ -3,6 +3,20 @@ workspace(name = "org_xprof")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
+    name = "io_bazel_rules_closure",
+    sha256 = "5b00383d08dd71f28503736db0500b6fb4dda47489ff5fc6bed42557c07c6ba9",
+    strip_prefix = "rules_closure-308b05b2419edb5c8ee0471b67a40403df940149",
+    urls = [
+        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/bazelbuild/rules_closure/archive/308b05b2419edb5c8ee0471b67a40403df940149.tar.gz",
+        "https://github.com/bazelbuild/rules_closure/archive/308b05b2419edb5c8ee0471b67a40403df940149.tar.gz",  # 2019-06-13
+    ],
+)
+
+load("@io_bazel_rules_closure//closure:defs.bzl", "closure_repositories")
+
+closure_repositories()
+
+http_archive(
     name = "bazel_skylib",
     sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
     urls = [
@@ -89,23 +103,6 @@ http_archive(
 )
 
 http_archive(
-    name = "io_bazel_rules_closure",
-    sha256 = "6a900831c1eb8dbfc9d6879b5820fd614d4ea1db180eb5ff8aedcb75ee747c1f",
-    strip_prefix = "rules_closure-db4683a2a1836ac8e265804ca5fa31852395185b",
-    urls = [
-        "http://mirror.tensorflow.org/github.com/bazelbuild/rules_closure/archive/db4683a2a1836ac8e265804ca5fa31852395185b.tar.gz",
-        "https://github.com/bazelbuild/rules_closure/archive/db4683a2a1836ac8e265804ca5fa31852395185b.tar.gz",  # 2020-01-15
-    ],
-)
-
-load("@io_bazel_rules_closure//closure:repositories.bzl", "rules_closure_dependencies")
-
-rules_closure_dependencies(
-    omit_com_google_protobuf = True,
-    omit_com_google_protobuf_js = True,
-)
-
-http_archive(
     name = "build_bazel_rules_nodejs",
     sha256 = "94070eff79305be05b7699207fbac5d2608054dd53e6109f7d00d923919ff45a",
     urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.8.2/rules_nodejs-5.8.2.tar.gz"],
@@ -147,18 +144,6 @@ load("@io_bazel_rules_sass//:defs.bzl", "sass_repositories")
 
 sass_repositories()
 
-#http_archive(
-#    name = "org_tensorflow",
-#    # NOTE: when updating this, MAKE SURE to also update the protobuf_js runtime version
-#    # in third_party/workspace.bzl to >= the protobuf/protoc version provided by TF.
-#    sha256 = "638e541a4981f52c69da4a311815f1e7989bf1d67a41d204511966e1daed14f7",
-#    strip_prefix = "tensorflow-2.1.0",
-#    urls = [
-#        "http://mirror.tensorflow.org/github.com/tensorflow/tensorflow/archive/v2.1.0.tar.gz",  # 2020-01-06
-#        "https://github.com/tensorflow/tensorflow/archive/v2.1.0.tar.gz",
-#    ],
-#)
-
 http_archive(
     name = "com_google_protobuf",
     sha256 = "f66073dee0bc159157b0bd7f502d7d1ee0bc76b3c1eac9836927511bdc4b3fc1",
@@ -173,6 +158,88 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 protobuf_deps()
 
 http_archive(
+    name = "org_tensorflow",
+    # NOTE: when updating this, MAKE SURE to also update the protobuf_js runtime version
+    # in third_party/workspace.bzl to >= the protobuf/protoc version provided by TF.
+    sha256 = "288f840d70639d54a087b9ba5310ffae3dbc45ede90ada168a0943cb6e43dabe",
+    strip_prefix = "tensorflow-a568daa404774cc90c3729ad7af2c9f7a0a558d2",
+    urls = [
+        "https://github.com/tensorflow/tensorflow/archive/a568daa404774cc90c3729ad7af2c9f7a0a558d2.zip",
+    ],
+)
+
+load(
+    "@org_tensorflow//tensorflow/tools/toolchains/python:python_repo.bzl",
+    "python_repository",
+)
+
+python_repository(name = "python_version_repo")
+
+# Initialize TensorFlow's external dependencies.
+load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
+
+tf_workspace3()
+
+load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
+
+tf_workspace2()
+
+load("@org_tensorflow//tensorflow:workspace1.bzl", "tf_workspace1")
+
+tf_workspace1()
+
+load("@org_tensorflow//tensorflow:workspace0.bzl", "tf_workspace0")
+
+tf_workspace0()
+
+load(
+    "@local_tsl//third_party/gpus/cuda/hermetic:cuda_json_init_repository.bzl",
+    "cuda_json_init_repository",
+)
+
+cuda_json_init_repository()
+
+load(
+    "@cuda_redist_json//:distributions.bzl",
+    "CUDA_REDISTRIBUTIONS",
+    "CUDNN_REDISTRIBUTIONS",
+)
+load(
+    "@local_tsl//third_party/gpus/cuda/hermetic:cuda_redist_init_repositories.bzl",
+    "cuda_redist_init_repositories",
+    "cudnn_redist_init_repository",
+)
+
+cuda_redist_init_repositories(
+    cuda_redistributions = CUDA_REDISTRIBUTIONS,
+)
+
+cudnn_redist_init_repository(
+    cudnn_redistributions = CUDNN_REDISTRIBUTIONS,
+)
+
+load(
+    "@local_tsl//third_party/gpus/cuda/hermetic:cuda_configure.bzl",
+    "cuda_configure",
+)
+
+cuda_configure(name = "local_config_cuda")
+
+load(
+    "@local_tsl//third_party/nccl/hermetic:nccl_redist_init_repository.bzl",
+    "nccl_redist_init_repository",
+)
+
+nccl_redist_init_repository()
+
+load(
+    "@local_tsl//third_party/nccl/hermetic:nccl_configure.bzl",
+    "nccl_configure",
+)
+
+nccl_configure(name = "local_config_nccl")
+
+http_archive(
     name = "io_bazel_rules_closure",
     sha256 = "6a900831c1eb8dbfc9d6879b5820fd614d4ea1db180eb5ff8aedcb75ee747c1f",
     strip_prefix = "rules_closure-db4683a2a1836ac8e265804ca5fa31852395185b",
@@ -184,8 +251,8 @@ http_archive(
 
 http_archive(
     name = "org_tensorflow_tensorboard",
-    patch_args = ["-p1"],
-    patches = ["//third_party:tensorboard.patch"],
+    # patch_args = ["-p1"],
+    # patches = ["//third_party:tensorboard.patch"],
     sha256 = "bcd63689364fa397f4a8740349cf281a0f58f6ff93e09f7f049dc3744623fa29",
     strip_prefix = "tensorboard-0f4573b73838decf530bc8bcac53459fd4bc02e7",
     urls = ["https://github.com/tensorflow/tensorboard/archive/0f4573b73838decf530bc8bcac53459fd4bc02e7.tar.gz"],  # 2021-03-08
